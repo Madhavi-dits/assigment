@@ -18,6 +18,7 @@ export const RESPONSE_MESSAGES = {
     ERROR_MESSAGES:{
         INTERNAL_SERVER_ERROR : "Internal Server Error",
         VALIDATION_ERROR : "Validation Error",
+        BAD_REQUEST: "Bad Request"
     },
     COMMON:{
         NO_DATA_FOUND: "No Data Found"

@@ -5,6 +5,8 @@ import { comparePasswords, hashPassword } from 'src/utils/password';
 import { JwtService } from '@nestjs/jwt';
 import { RESPONSE_MESSAGES } from 'src/utils/message/message';
 import * as argon2 from 'argon2';
+import SendResponse from 'src/utils/response/response';
+import { STATUS_CODE } from 'src/utils/statusCode/status-code';
 
 @Injectable()
 export class UsersService {
@@ -15,17 +17,16 @@ export class UsersService {
         private jwtService: JwtService,
     ) { }
 
-    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string): Promise<User> {
+    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string): Promise<{status: number, data:string, message:string}> {
         const hashedPassword = await hashPassword(password);
         let user: User;
         try {
             user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword });
             const tokens = await this.getTokens(user.id, user.email);
             await this.updateRefreshToken(user.id, tokens.refreshToken);
-            return user;
+            return SendResponse(STATUS_CODE.CREATED, user, RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY );
         } catch (error) {
-            console.log(error.message)
-            return error.message;
+            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
 
     }
@@ -34,8 +35,7 @@ export class UsersService {
         try {
             return await this.userModel.findOne({ where: { email } });
         } catch (error) {
-            console.log(error.message)
-            return error.message;
+            return error.message
         }
 
     }
@@ -43,7 +43,6 @@ export class UsersService {
         try {
             return await this.userModel.findOne({ where: { id } });
         } catch (error) {
-            console.log(error.message)
             return error.message;
         }
 
@@ -57,25 +56,23 @@ export class UsersService {
             }
             return null;
         } catch (error) {
-            console.log(error.message);
             return error.message;
         }
 
     }
 
-    async login(user: User): Promise<{ accessToken: string, refreshToken: string }> {
-        let tokens;
+    async login(user: User) {
+        let tokens:any;
         try {
             tokens = await this.getTokens(user.id, user.email);
-            return tokens;
+            return  tokens;
         } catch (error) {
-            console.log(error.message);
             return error.message;
         }
 
     }
 
-    async generateResetToken(email: string): Promise<string | null> {
+    async generateResetToken(email: string): Promise<{status: number, data:string, message:string}> {
         let resetToken = process.env.RESET_TOKEN;
         let resetTokenExpires = new Date(Date.now() + 3600000);
         try {
@@ -87,23 +84,21 @@ export class UsersService {
                 { resetToken, resetTokenExpires },
                 { where: { email } },
             );
-            return resetToken;
+            return SendResponse(STATUS_CODE.OK, {'data':resetToken}, RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY);
         } catch (error) {
-            console.log(error.message);
-            return error.message;
+            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error.message}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
 
     }
-    async resetPassword(email: string, token: string, password: string): Promise<{ message: string }> {
+    async resetPassword(email: string, token: string, password: string): Promise<{ status: number, data:string, message:string }> {
         try {
             await this.userModel.update(
                 { password, resetToken: null, resetTokenExpires: null },
                 { where: { email, resetToken: token, resetTokenExpires: { $gt: new Date() } } },
             );
-            return { message: RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY }
+            return SendResponse(STATUS_CODE.OK, RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY);
         } catch (error) {
-            console.log(error.message);
-            return error.message;
+            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error.message}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
     }
 
@@ -139,8 +134,7 @@ export class UsersService {
                 refreshToken,
             };
         } catch (error) {
-            console.log(error.message);
-            return error.message;
+            return error.message
         }
 
     }
@@ -154,8 +148,7 @@ export class UsersService {
             );
             return hashedRefreshToken;
         } catch (error) {
-            console.log(error.message);
-            return error.message;
+            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
 
     }
@@ -173,8 +166,7 @@ export class UsersService {
             await this.updateRefreshToken(user.id, tokens.refreshToken);
             return tokens;
         } catch (error) {
-            console.log(error.message);
-            return error.message;
+            return error.message
         }
 
     }

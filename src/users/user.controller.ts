@@ -30,14 +30,10 @@ export class UsersController {
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     })
     @ApiResponse({
-        status: 400,
+        status: 403,
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
     })
     async register(@Body() createUserDto: CreateUserDto) {
-        const existingUser = await this.userService.findByEmail(createUserDto.email);
-        if (existingUser) {
-            throw new Error(RESPONSE_MESSAGES.MESSAGE.EMAIL_ALREADY_EXISTS);
-        }
         const { firstName, lastName, email, password, dob, gender, address, phoneNumber } = await registerSchema.validate(createUserDto);
         return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber);
     }
@@ -55,7 +51,7 @@ export class UsersController {
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     })
     @ApiResponse({
-        status: 400,
+        status: 403,
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
     })
     async login(@Body() loginDto: LoginDto): Promise<{ accessToken: string, refreshToken: string }> {
@@ -82,7 +78,7 @@ export class UsersController {
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     })
     @ApiResponse({
-        status: 400,
+        status: 403,
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
     })
     async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ resetToken, message }> {
@@ -103,7 +99,7 @@ export class UsersController {
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     })
     @ApiResponse({
-        status: 400,
+        status: 403,
         description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
     })
     async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: any }> {

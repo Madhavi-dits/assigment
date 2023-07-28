@@ -5,7 +5,7 @@ const databaseConfig: SequelizeModuleOptions = {
     host: 'localhost',
     //   port: 3306,
     username: 'root',
-    password: '123qwe!@#QWE',
+    password: '',
     database: 'assesment',
     models: [__dirname + '/**/*.model.ts'],
     autoLoadModels: true,
