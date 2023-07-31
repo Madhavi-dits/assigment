@@ -12,50 +12,27 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { User } from './user.model';
 import { loginSchema } from 'src/schema/login.schema';
 import { resetPasswordSchema } from 'src/schema/reset-password.schema';
+import SendResponse from 'src/utils/response/response';
+import { STATUS_CODE } from 'src/utils/statusCode/status-code';
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly userService: UsersService) { }
-
+    constructor(private readonly userService: UsersService) {}
+    
     @Post('register')
-    @ApiOperation({ summary: RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY })
-    @ApiResponse({
-        status: 200,
-        description: RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY,
-        type: User,
-        isArray: true,
-    })
-    @ApiResponse({
-        status: 500,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-    })
-    @ApiResponse({
-        status: 403,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
-    })
-    async register(@Body() createUserDto: CreateUserDto) {
-        const { firstName, lastName, email, password, dob, gender, address, phoneNumber } = await registerSchema.validate(createUserDto);
-        return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber);
+    async register(@Body() createUserDto: CreateUserDto):Promise<{status: number, data: string, message: string}> {
+        try {
+            const { firstName, lastName, email, password, dob, gender, address, phoneNumber } = await registerSchema.validate(createUserDto);
+            return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber);
+        } catch (error) {
+            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
+        }
+
     }
 
-    
     @Post('login')
-    @ApiOperation({ summary: RESPONSE_MESSAGES.MESSAGE.USER_LOGIN_SUCCESSFULLY })
-    @ApiResponse({
-        status: 200,
-        description: RESPONSE_MESSAGES.MESSAGE.USER_LOGIN_SUCCESSFULLY,
-        isArray: true,
-    })
-    @ApiResponse({
-        status: 500,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-    })
-    @ApiResponse({
-        status: 403,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
-    })
     async login(@Body() loginDto: LoginDto): Promise<{ accessToken: string, refreshToken: string }> {
-        const {email , password } = await loginSchema.validate(loginDto);
+        const { email, password } = await loginSchema.validate(loginDto);
         const user = await this.userService.validateUser(
             email,
             password,
@@ -68,19 +45,6 @@ export class UsersController {
     }
 
     @Post('forgot-password')
-    @ApiOperation({ summary: RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY})
-    @ApiResponse({
-        status: 200,
-        description: RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY,
-    })
-    @ApiResponse({
-        status: 500,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-    })
-    @ApiResponse({
-        status: 403,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
-    })
     async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ resetToken, message }> {
         const { email } = forgotPasswordDto;
         const resetToken = await this.userService.generateResetToken(email);
@@ -89,19 +53,7 @@ export class UsersController {
 
 
     @Post('reset-password')
-    @ApiOperation({ summary: RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY })
-    @ApiResponse({
-        status: 200,
-        description: RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY,
-    })
-    @ApiResponse({
-        status: 500,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-    })
-    @ApiResponse({
-        status: 403,
-        description: RESPONSE_MESSAGES.ERROR_MESSAGES.VALIDATION_ERROR,
-    })
+
     async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: any }> {
         const { email, token, password } = await resetPasswordSchema.validate(resetPasswordDto);
         const user = await this.userService.findByEmail(email);

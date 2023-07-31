@@ -7,6 +7,7 @@ import { RESPONSE_MESSAGES } from 'src/utils/message/message';
 import * as argon2 from 'argon2';
 import SendResponse from 'src/utils/response/response';
 import { STATUS_CODE } from 'src/utils/statusCode/status-code';
+import * as crypto from 'crypto'
 
 @Injectable()
 export class UsersService {
@@ -17,16 +18,16 @@ export class UsersService {
         private jwtService: JwtService,
     ) { }
 
-    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string): Promise<{status: number, data:string, message:string}> {
+    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string): Promise<{ status: number, data: string, message: string }> {
         const hashedPassword = await hashPassword(password);
         let user: User;
         try {
             user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword });
             const tokens = await this.getTokens(user.id, user.email);
             await this.updateRefreshToken(user.id, tokens.refreshToken);
-            return SendResponse(STATUS_CODE.CREATED, user, RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY );
+            return SendResponse(STATUS_CODE.CREATED, user, RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY);
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
+            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
 
     }
@@ -62,18 +63,18 @@ export class UsersService {
     }
 
     async login(user: User) {
-        let tokens:any;
+        let tokens: any;
         try {
             tokens = await this.getTokens(user.id, user.email);
-            return  tokens;
+            return tokens;
         } catch (error) {
             return error.message;
         }
 
     }
 
-    async generateResetToken(email: string): Promise<{status: number, data:string, message:string}> {
-        let resetToken = process.env.RESET_TOKEN;
+    async generateResetToken(email: string): Promise<{ status: number, data: string, message: string }> {
+        let resetToken = crypto.randomBytes(40).toString('hex');
         let resetTokenExpires = new Date(Date.now() + 3600000);
         try {
             const user = await this.findByEmail(email);
@@ -84,13 +85,13 @@ export class UsersService {
                 { resetToken, resetTokenExpires },
                 { where: { email } },
             );
-            return SendResponse(STATUS_CODE.OK, {'data':resetToken}, RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY);
+            return SendResponse(STATUS_CODE.OK, { 'data': resetToken }, RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY);
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error.message}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
+            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error.message }, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
 
     }
-    async resetPassword(email: string, token: string, password: string): Promise<{ status: number, data:string, message:string }> {
+    async resetPassword(email: string, token: string, password: string): Promise<{ status: number, data: string, message: string }> {
         try {
             await this.userModel.update(
                 { password, resetToken: null, resetTokenExpires: null },
@@ -98,7 +99,7 @@ export class UsersService {
             );
             return SendResponse(STATUS_CODE.OK, RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY);
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error.message}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
+            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error.message }, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
     }
 
@@ -114,7 +115,7 @@ export class UsersService {
                     },
                     {
                         secret: secret,
-                        expiresIn: '3m',
+                        expiresIn: '1h',
                     },
                 ),
                 await this.jwtService.signAsync(
@@ -148,7 +149,7 @@ export class UsersService {
             );
             return hashedRefreshToken;
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, {'error':error}, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
+            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.ERROR_MESSAGES.BAD_REQUEST);
         }
 
     }
