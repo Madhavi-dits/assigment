@@ -6,8 +6,12 @@ import { User } from './users/user.model';
 import { UsersModule } from './users/user.module';
 import { UsersController } from './users/user.controller';
 import { UsersService } from './users/user.service';
-import {  JwtService } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
+import { EmailService } from './email/email.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronjobsModule } from './cronjobs/cronjobs.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -24,10 +28,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       models: [__dirname + '/**/*.model.ts'],
       autoLoadModels: true,
       synchronize: true,
+      logging: false
     }),
+    ScheduleModule.forRoot(),
+    CronjobsModule,
     UsersModule,
+    EmailModule,
   ],
   controllers: [AppController, UsersController],
-  providers: [AppService, UsersService, JwtService],
+  providers: [AppService, UsersService, JwtService, EmailService]
 })
-export class AppModule {}
+export class AppModule { }

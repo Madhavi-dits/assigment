@@ -1,26 +1,30 @@
 export const RESPONSE_MESSAGES = {
     MESSAGE: {
-        USER_REGISTERED_SUCCESSFULLY : "User registered successfully",
-        ACCESS_TOKEN :  "Access Token",
-        EMAIL_ALREADY_EXISTS : "Email Already Exists",
+        USER_REGISTERED_SUCCESSFULLY : "User registered successfully. Please verify your email or phone number.",
+        ACCESS_TOKEN :  "Access token",
+        EMAIL_ALREADY_EXISTS : "Email already exists",
         INVALID_CREDENTIALS : "Invalid credentials",
-        RESET_PASSWORD_TOKEN : "Reset Password Token",
+        RESET_PASSWORD_TOKEN : "Reset password token",
         INVALID_OR_EXPIRED_RESET_TOKEN : "Invalid or expired reset token",
         USER_NOT_FOUND : "User not found",
-        PASSWORD_RESET_SUCCESSFULLY : "Password Reset Successfully",
+        PASSWORD_RESET_SUCCESSFULLY : "Password reset successfully",
         WELCOME_TO_HOME_PAGE : "Welcome to home page",
-        USER_LOGIN_SUCCESSFULLY: "User Login Successfully",
-        TOKEN_GENERATED_SUCCESSFULLY : "Token generated successfully"
-    },
-    USER:{
-        USER: "User"
-    },
-    ERROR_MESSAGES:{
+        USER_LOGIN_SUCCESSFULLY: "User login successfully",
+        TOKEN_GENERATED_SUCCESSFULLY : "Token generated successfully",
+        REFRESH_TOKEN: "Refresh token",
+        ACCESS_DENIED:"Access denied",
+        PHONE_NUMBER_ALREADY_EXISTS: "Phone number already exists",
         INTERNAL_SERVER_ERROR : "Internal Server Error",
         VALIDATION_ERROR : "Validation Error",
-        BAD_REQUEST: "Bad Request"
-    },
-    COMMON:{
-        NO_DATA_FOUND: "No Data Found"
+        BAD_REQUEST: "Bad Request",
+        NO_DATA_FOUND: "No Data Found",
+        PLEASE_VERIFY_OTP: "Please verify otp",
+        OTP_SENT_SUCCESSFULLY: "Otp sent successfully",
+        OTP_EXPIRED: "Your has been expired. Send new otp.",
+        USER_VERIFIED: "Your account has been verifed",
+        EMAIL_SENT_SUCCESSFULLY:"Email sent successfully",
+        INVALID_OTP:"Invalid Otp",
+        PASSWORD_CHANGE_SUCCESSFULLY:"Your password has been change successfully",
+        VERIFY_ACCOUNT: "Your account is not verified.Please verify your account. OTP sent."
     }
 }

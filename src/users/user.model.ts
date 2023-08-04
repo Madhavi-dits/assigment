@@ -1,5 +1,5 @@
 
-import { Column, DataType, Table,Model } from 'sequelize-typescript';
+import { Column, DataType, Table, Model, Default } from 'sequelize-typescript';
 
 @Table
 export class User extends Model<User> {
@@ -49,6 +49,7 @@ export class User extends Model<User> {
   @Column({
     type: DataType.STRING,
     allowNull: false,
+    unique: true,
   })
   phoneNumber: string;
 
@@ -69,4 +70,30 @@ export class User extends Model<User> {
     allowNull: true,
   })
   refreshToken: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  otp: string;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true
+  })
+  otpExpiration: Date;
+
+  @Default(false)
+  @Column({
+    type: DataType.BOOLEAN, 
+    allowNull: true,
+  })
+  isVerified: boolean;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true
+  })
+  passwordUpdateAt: Date;
+
 }
