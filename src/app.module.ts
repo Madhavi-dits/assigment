@@ -1,8 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, Scope } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { User } from './users/user.model';
 import { UsersModule } from './users/user.module';
 import { UsersController } from './users/user.controller';
 import { UsersService } from './users/user.service';
@@ -36,6 +35,6 @@ import { EmailModule } from './email/email.module';
     EmailModule,
   ],
   controllers: [AppController, UsersController],
-  providers: [AppService, UsersService, JwtService, EmailService]
+  providers: [AppService, UsersService, JwtService, EmailService,]
 })
 export class AppModule { }

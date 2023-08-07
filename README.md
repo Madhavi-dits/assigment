@@ -25,6 +25,21 @@
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+node version 20.5.0
+nest version 10.1.0
+database mysql with squelizer
+for sending to phone :-  use twilio
+for sending emails : - use nodemailer
+
+signup user after signup user needs to verify their account.
+login user before login need to verify their account.
+user can login with email or phonenumber.
+forget password
+reset password
+change password
+change password policy within 90 days
+cron services :-sending alert emails for change password at 90 days
+
 
 ## Installation
 

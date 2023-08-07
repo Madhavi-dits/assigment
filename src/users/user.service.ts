@@ -4,13 +4,13 @@ import { User } from './user.model';
 import { comparePasswords, hashPassword } from 'src/utils/password';
 import { JwtService } from '@nestjs/jwt';
 import { RESPONSE_MESSAGES } from 'src/utils/message/message';
-import { Response, SendResponse } from 'src/utils/response/response';
 import { STATUS_CODE } from 'src/utils/statusCode/status-code';
 import * as crypto from 'crypto';
 import { Twilio } from 'twilio';
 import { EmailService } from 'src/email/email.service';
 import { compare } from 'bcryptjs';
 import { message, otp, otpExpiration, time } from 'src/utils/constant/constant';
+import { STATUS } from 'src/utils/enum/status.enum';
 
 @Injectable()
 export class UsersService {
@@ -26,28 +26,28 @@ export class UsersService {
         const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN
         this.twilioClient = new Twilio(twilioAccountSid, twilioAuthToken);
     }
-
+    //  signup user
     async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string) {
         const hashedPassword = await hashPassword(password);
         let user;
         try {
             const userEmailExists = await this.findByEmail(email);
             if (userEmailExists) {
-                return SendResponse(STATUS_CODE.FORBIDDEN, email, RESPONSE_MESSAGES.MESSAGE.EMAIL_ALREADY_EXISTS)
+                return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.EMAIL_ALREADY_EXISTS }
             }
             const userPhoneExists = await this.findByPhoneNumber(phoneNumber);
             if (userPhoneExists) {
-                return SendResponse(STATUS_CODE.FORBIDDEN, phoneNumber, RESPONSE_MESSAGES.MESSAGE.PHONE_NUMBER_ALREADY_EXISTS)
+                return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.PHONE_NUMBER_ALREADY_EXISTS };
             }
             user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword, passwordUpdateAt: new Date() });
             await this.sendOtpToPhone(user);
             await this.sendOtpToEmail(user);
-            return SendResponse(STATUS_CODE.CREATED, user, RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY);
+            return { statusCode: STATUS_CODE.CREATED, data: user, message: RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY };
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
     }
-
+    // user find by email
     async findByEmail(email: string): Promise<User | null> {
         try {
             return await this.userModel.findOne({ where: { email } });
@@ -55,6 +55,7 @@ export class UsersService {
             return error.message
         }
     }
+    // user find by phoneNumber
     async findByPhoneNumber(phoneNumber: string): Promise<User | null> {
         try {
             return await this.userModel.findOne({ where: { phoneNumber } });
@@ -62,6 +63,7 @@ export class UsersService {
             return error.message
         }
     }
+    // user find by id
     async findById(id: string): Promise<User | null> {
         try {
             return await this.userModel.findOne({ where: { id } });
@@ -69,6 +71,7 @@ export class UsersService {
             return error.message;
         }
     }
+    // validate user before login
     async validateUser(email: string, password: string, phoneNumber: string) {
         let user;
         try {
@@ -83,10 +86,10 @@ export class UsersService {
             }
             return null;
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
     }
-
+    //  send otp to phoneNumber
     async sendOtpToPhone(user) {
         const COUNTRY_CODE = '+91'
         try {
@@ -99,12 +102,12 @@ export class UsersService {
                 { otp: otp, otpExpiration: otpExpiration },
                 { where: { phoneNumber: user.phoneNumber } },
             );
-            return Response(STATUS_CODE.OK, RESPONSE_MESSAGES.MESSAGE.OTP_SENT_SUCCESSFULLY);
+            return { statusCode: STATUS_CODE.OK, message: RESPONSE_MESSAGES.MESSAGE.OTP_SENT_SUCCESSFULLY }
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
     }
-
+    // send otp to email
     async sendOtpToEmail(user) {
         try {
             const mailDetails = {
@@ -122,12 +125,12 @@ export class UsersService {
                 { otp: otp, otpExpiration: otpExpiration },
                 { where: { email: user.email } },
             );
-            return Response(STATUS_CODE.OK, RESPONSE_MESSAGES.MESSAGE.OTP_SENT_SUCCESSFULLY);
+            return { statusCode: STATUS_CODE.OK, message: RESPONSE_MESSAGES.MESSAGE.OTP_SENT_SUCCESSFULLY }
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
     }
-
+    // verify otp
     async verifyOtp(email: string, phoneNumber: string, otp: string) {
         let user;
         try {
@@ -138,7 +141,7 @@ export class UsersService {
                 user = await this.findByEmail(email);
             }
             if (!user) {
-                return { status: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.USER_NOT_FOUND }
+                return { statusCode: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.USER_NOT_FOUND };
             }
             if (user && otp === user.otp) {
                 const timeDiff = parseInt(time) - parseInt(user.otpExpiration.getTime());
@@ -148,7 +151,7 @@ export class UsersService {
                         { otp: null, otpExpiration: null, isVerified: true },
                         { where: { id: user.id } },
                     );
-                    return { status: STATUS_CODE.ACCEPTED, message: RESPONSE_MESSAGES.MESSAGE.USER_VERIFIED };
+                    return { statusCode: STATUS_CODE.ACCEPTED, message: RESPONSE_MESSAGES.MESSAGE.USER_VERIFIED };
                 }
                 if (minDiff > 5) {
                     if (phoneNumber) {
@@ -157,17 +160,18 @@ export class UsersService {
                     if (email) {
                         await this.sendOtpToEmail(user);
                     }
-                    return { status: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.OTP_EXPIRED };
+                    return { statusCode: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.OTP_EXPIRED };
                 }
-                return SendResponse(STATUS_CODE.NOT_FOUND, '', RESPONSE_MESSAGES.MESSAGE.OTP_EXPIRED);
+                return { statusCode: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.OTP_EXPIRED }
             } else {
-                return Response(STATUS_CODE.FORBIDDEN, RESPONSE_MESSAGES.MESSAGE.INVALID_OTP);
+                return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.INVALID_OTP };
             }
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
 
     }
+    // login user
     async login(email: string, password: string, phoneNumber: string) {
         let verifiedUser;
         try {
@@ -177,32 +181,32 @@ export class UsersService {
                 phoneNumber,
             );
             if (!user) {
-                throw new UnauthorizedException(RESPONSE_MESSAGES.MESSAGE.INVALID_CREDENTIALS);
+                return { statusCode: STATUS_CODE.UNAUTHORIZED, message: RESPONSE_MESSAGES.MESSAGE.INVALID_CREDENTIALS };
             }
-            if(user.isVerified == 1){
+            if(user.isVerified){
                 if (phoneNumber) {
                     verifiedUser = await this.sendOtpToPhone(user);
                 }
-                if(email){
+                if (email) {
                     verifiedUser = await this.sendOtpToEmail(user);
                 }
                 return verifiedUser;
-            }
-            else{
+            } else {
                 if (phoneNumber) {
-                    verifiedUser = await this.sendOtpToPhone(user);
+                    await this.sendOtpToPhone(user);
                 }
-                if(email){
-                    verifiedUser = await this.sendOtpToEmail(user);
+                if (email) {
+                    await this.sendOtpToEmail(user);
                 }
-                return Response(STATUS_CODE.UNAUTHORIZED, RESPONSE_MESSAGES.MESSAGE.VERIFY_ACCOUNT)
+                return { statusCode: STATUS_CODE.UNAUTHORIZED, message: RESPONSE_MESSAGES.MESSAGE.VERIFY_ACCOUNT }
             }
             
+
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
     }
-
+    // login time verification
     async loginVerified(email: string, phoneNumber: string, otp: string) {
         let user;
         let tokens;
@@ -235,7 +239,7 @@ export class UsersService {
                     if (email) {
                         await this.sendOtpToEmail(user);
                     }
-                    return Response(STATUS_CODE.NOT_FOUND, RESPONSE_MESSAGES.MESSAGE.OTP_EXPIRED);
+                    return { statusCode: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.OTP_EXPIRED };
                 }
             } else {
                 if (phoneNumber) {
@@ -244,14 +248,14 @@ export class UsersService {
                 if (email) {
                     await this.sendOtpToEmail(user);
                 }
-                return Response(STATUS_CODE.FORBIDDEN, RESPONSE_MESSAGES.MESSAGE.INVALID_OTP);
+                return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.INVALID_OTP };
             }
 
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
         }
     }
-
+    // genrate reset password token
     async generateResetToken(email: string) {
         let resetToken = crypto.randomBytes(40).toString('hex');
         let resetTokenExpires = new Date(Date.now() + 3600000);
@@ -264,25 +268,28 @@ export class UsersService {
                 { resetToken, resetTokenExpires },
                 { where: { email } },
             );
-            return SendResponse(STATUS_CODE.OK, { 'data': resetToken }, RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY);
+            return { data: resetToken, message: RESPONSE_MESSAGES.MESSAGE.TOKEN_GENERATED_SUCCESSFULLY };
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error.message }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST };
         }
 
     }
+    // reset password api
     async resetPassword(email: string, token: string, password: string) {
         try {
             await this.userModel.update(
-                { password, resetToken: null, resetTokenExpires: null,passwordUpdateAt: new Date() },
-                { where: { email, resetToken: token, resetTokenExpires: { $gt: new Date() } } },
+                { password: password, resetToken: null, resetTokenExpires: null, passwordUpdateAt: new Date() },
+                { where: { email: email } },
             );
-            return SendResponse(STATUS_CODE.OK, '', RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY);
+            return { statusCode: STATUS_CODE.OK, message: RESPONSE_MESSAGES.MESSAGE.PASSWORD_RESET_SUCCESSFULLY }
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error.message }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
         }
     }
-
-    async getTokens(userId: string, username: string) {
+    // get access and refresh token
+    async getTokens(userId: string, email: string) {
         const secret: string = process.env.JWT_SECRET;
         const refreshSecret: string = process.env.JWT_REFRESH_SECRET;
         try {
@@ -290,7 +297,7 @@ export class UsersService {
                 await this.jwtService.signAsync(
                     {
                         sub: userId,
-                        username,
+                        email,
                     },
                     {
                         secret: secret,
@@ -300,7 +307,7 @@ export class UsersService {
                 await this.jwtService.signAsync(
                     {
                         sub: userId,
-                        username,
+                        email,
                     },
                     {
                         secret: refreshSecret,
@@ -308,17 +315,13 @@ export class UsersService {
                     },
                 ),
             ]);
-
-            return {
-                accessToken,
-                refreshToken,
-            };
+            return { data: { accessToken: accessToken, refreshToken: refreshToken } };
         } catch (error) {
             return error.message
         }
 
     }
-
+    // update refresh token
     async updateRefreshToken(userId: string, refreshToken: string) {
         try {
             const hashedRefreshToken = await this.hashData(refreshToken);
@@ -326,17 +329,20 @@ export class UsersService {
                 { refreshToken: hashedRefreshToken },
                 { where: { id: userId } },
             );
-            return hashedRefreshToken;
+            return { data: hashedRefreshToken };
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
         }
 
     }
+    //from refresh token get new access token
     async refreshTokens(userId: string, refreshToken: string) {
         try {
             const user = await this.findById(userId);
             if (!user?.refreshToken) {
-                throw new ForbiddenException(RESPONSE_MESSAGES.MESSAGE.ACCESS_DENIED);
+                return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.ACCESS_DENIED };
             }
 
             const refreshTokenMatches = await compare(
@@ -344,7 +350,7 @@ export class UsersService {
                 refreshToken,
             );
             if (!refreshTokenMatches) {
-                throw new ForbiddenException(RESPONSE_MESSAGES.MESSAGE.ACCESS_DENIED)
+                return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.ACCESS_DENIED };
             };
             const tokens = await this.getTokens(user.id, user.email);
             await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -354,20 +360,23 @@ export class UsersService {
         }
 
     }
+    // hash refreh token
     hashData(data: string) {
         return hashPassword(data);
     }
+    // logout 
     async logout(userId: string) {
         try {
-            await this.userModel.update( { refreshToken: null }, {where:{id:userId}});
+            await this.userModel.update({ refreshToken: null }, { where: { id: userId } });
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
         }
-        
-    }
 
-    async changePassword(email:string,phoneNumber:string, oldPassword:string, newPassword:string)
-    {
+    }
+    // change password 
+    async changePassword(email: string, phoneNumber: string, oldPassword: string, newPassword: string) {
         const hashedPassword = await hashPassword(newPassword);
         try {
             const user = await this.validateUser(
@@ -376,18 +385,20 @@ export class UsersService {
                 phoneNumber,
             );
             if (!user) {
-                throw new UnauthorizedException(RESPONSE_MESSAGES.MESSAGE.INVALID_CREDENTIALS);
+                return { statusCode: STATUS_CODE.UNAUTHORIZED, message: RESPONSE_MESSAGES.MESSAGE.INVALID_CREDENTIALS };
             }
             await this.userModel.update(
-                { password: hashedPassword, passwordUpdateAt: new Date()},
+                { password: hashedPassword, passwordUpdateAt: new Date() },
                 { where: { email: user.email } },
             );
-            return Response(STATUS_CODE.OK, RESPONSE_MESSAGES.MESSAGE.PASSWORD_CHANGE_SUCCESSFULLY)
+            return { statusCode: STATUS_CODE.OK, message: RESPONSE_MESSAGES.MESSAGE.PASSWORD_CHANGE_SUCCESSFULLY }
 
         } catch (error) {
-            return SendResponse(STATUS_CODE.BAD_REQUEST, { 'error': error }, RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST);
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
         }
-    }
 
-   
+
+    }
 }

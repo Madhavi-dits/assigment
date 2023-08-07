@@ -15,11 +15,3 @@ export interface IUSER {
     otpExpiration?: Date;
 }
 
-export interface IEMAILREQUEST{
-    email?: string
-}
-
-export interface IEMAILRESPONSE{
-    statusCode?: string,
-    message?: string
-}
