@@ -1,4 +1,3 @@
-
 import { Column, DataType, Table, Model, Default } from 'sequelize-typescript';
 
 @Table
@@ -95,5 +94,11 @@ export class User extends Model<User> {
     allowNull: true
   })
   passwordUpdateAt: Date;
+
+  @Column({
+    type:DataType.ENUM('user', 'admin', 'superadmin'),
+    allowNull: true
+  })
+  role: string;
 
 }

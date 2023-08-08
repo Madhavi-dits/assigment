@@ -25,6 +25,7 @@ export const RESPONSE_MESSAGES = {
         EMAIL_SENT_SUCCESSFULLY:"Email sent successfully",
         INVALID_OTP:"Invalid Otp",
         PASSWORD_CHANGE_SUCCESSFULLY:"Your password has been change successfully",
-        VERIFY_ACCOUNT: "Your account is not verified.Please verify your account. OTP sent."
+        VERIFY_ACCOUNT: "Your account is not verified.Please verify your account. OTP sent.",
+        USER_PROFILE_UPDATED: "Your profile has been updated"
     }
 }

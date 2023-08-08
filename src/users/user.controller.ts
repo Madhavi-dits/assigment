@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UnauthorizedException, Get, UseGuards, Req, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, Get, UseGuards, Req, UseInterceptors, Put, Param } from '@nestjs/common';
 import { UsersService } from './user.service';
 import { registerSchema } from 'src/schema/register.schema';
 import { CreateUserDto } from '../dto/createUser.dto';
@@ -11,11 +11,16 @@ import { resetPasswordSchema } from 'src/schema/reset-password.schema';
 import { STATUS_CODE } from 'src/utils/statusCode/status-code';
 import { VerifyUserDto } from 'src/dto/verifyUser.dto';
 import { RefreshTokenGuard } from 'src/guard/refreshToken.guard';
-import { ChangePasswordDto } from 'src/dto/changePassword';
+import { ChangePasswordDto } from 'src/dto/changePassword.dto';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { ResponseInterceptor } from 'src/interceptors/reponse.interceptors';
+import { UpdateUserProfiledDto } from 'src/dto/updateUserProfile.dto';
+import { RolesGuard } from 'src/guard/roles.guard';
+import { HasRole } from 'src/decorater/has-roles.decorator';
+import { Role } from 'src/utils/enum/role.enum';
 
 @Controller('users')
+// @UseGuards(RolesGuard)
 @UseInterceptors(ResponseInterceptor)
 export class UsersController {
     constructor(private readonly userService: UsersService) { }
@@ -24,8 +29,8 @@ export class UsersController {
     @Post('register')
     async register(@Body() createUserDto: CreateUserDto) {
         try {
-            const { firstName, lastName, email, password, dob, gender, address, phoneNumber } = await registerSchema.validate(createUserDto);
-            return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber);
+            const { firstName, lastName, email, password, dob, gender, address, phoneNumber, role } = await registerSchema.validate(createUserDto);
+            return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber, role);
         } catch (error) {
             return {
                 statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
@@ -144,5 +149,21 @@ export class UsersController {
             }
         }
     }
+
+    // update user profile
+    @UseGuards(AuthGuard, RolesGuard)
+    @HasRole(Role.USER, Role.ADMIN, Role.SUPERADMIN)
+    @Put('/update-user/:id')
+    async updateUser(@Param('id') id: string, @Body() updateUserProfile: UpdateUserProfiledDto) {
+        try {
+            const { firstName, lastName, dob, address } = updateUserProfile;
+            return await this.userService.updateUser(id, firstName, lastName, dob, address)
+        } catch (error) {
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
+        }
+    }
+
 }
 

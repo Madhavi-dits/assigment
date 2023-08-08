@@ -13,5 +13,6 @@ export interface IUSER {
     refreshToken? : string;
     otp?: string;
     otpExpiration?: Date;
+    role?: string;
 }
 

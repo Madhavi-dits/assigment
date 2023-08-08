@@ -10,7 +10,6 @@ import { Twilio } from 'twilio';
 import { EmailService } from 'src/email/email.service';
 import { compare } from 'bcryptjs';
 import { message, otp, otpExpiration, time } from 'src/utils/constant/constant';
-import { STATUS } from 'src/utils/enum/status.enum';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +26,7 @@ export class UsersService {
         this.twilioClient = new Twilio(twilioAccountSid, twilioAuthToken);
     }
     //  signup user
-    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string) {
+    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string, role:string) {
         const hashedPassword = await hashPassword(password);
         let user;
         try {
@@ -39,7 +38,7 @@ export class UsersService {
             if (userPhoneExists) {
                 return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.PHONE_NUMBER_ALREADY_EXISTS };
             }
-            user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword, passwordUpdateAt: new Date() });
+            user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword, passwordUpdateAt: new Date(), role });
             await this.sendOtpToPhone(user);
             await this.sendOtpToEmail(user);
             return { statusCode: STATUS_CODE.CREATED, data: user, message: RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY };
@@ -399,6 +398,24 @@ export class UsersService {
             }
         }
 
-
     }
+
+    async updateUser(id:string,firstName:string,lastName:string,dob:string,address:string){
+        try {
+            const user = await this.findById(id)
+            if (!user) {
+                return { statusCode: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.USER_NOT_FOUND };
+            }
+            await this.userModel.update(
+                { firstName: firstName, lastName:lastName,dob:dob,address:address },
+                { where: { id: id } },
+            );
+            return { statusCode: STATUS_CODE.OK, message: RESPONSE_MESSAGES.MESSAGE.USER_PROFILE_UPDATED }
+        } catch (error) {
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
+        }
+    }
+
 }
