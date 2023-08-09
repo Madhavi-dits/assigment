@@ -1,4 +1,6 @@
-import { Column, DataType, Table, Model, Default } from 'sequelize-typescript';
+import { allow } from 'joi';
+import { IntegerDataType } from 'sequelize';
+import { Column, DataType, Table, Model, Default, AllowNull } from 'sequelize-typescript';
 
 @Table
 export class User extends Model<User> {
@@ -100,5 +102,11 @@ export class User extends Model<User> {
     allowNull: true
   })
   role: string;
+
+  @Column({
+    type:DataType.STRING,
+    allowNull: true
+  })
+  createdBy: string;
 
 }

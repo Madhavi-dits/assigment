@@ -17,26 +17,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    const userDetails = await User.findByPk(user.sub);
-    console.log(userDetails);
-    // if (requiredRoles.includes(Role.SUPERADMIN)) {
-    //   if (userDetails.role === Role.SUPERADMIN && userDetails.id === userId) {
-    //     return true; // Superadmin can edit their own profile
-    //   } else {
-    //     return false; // Superadmin can't edit other superadmins' profiles
-    //   }
-    // }
-    if (userDetails.role === Role.SUPERADMIN) {
-      return true; // Superadmin can access everything
-    }
-    if (
-      (userDetails.role === Role.ADMIN || userDetails.role === Role.USER) &&
-      (requiredRoles.includes(Role.ADMIN) || requiredRoles.includes(Role.USER))
-    ) {
-      return false;
-    }
+    const userDetails = await User.findByPk(user?.sub);
     return requiredRoles.some((role) => userDetails?.role?.includes(role));
-
-
   }
 }

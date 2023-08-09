@@ -26,11 +26,16 @@ export class UsersController {
     constructor(private readonly userService: UsersService) { }
 
     // register
+    @UseGuards(AuthGuard, RolesGuard)
+    @HasRole(Role.ADMIN, Role.SUPERADMIN)
     @Post('register')
-    async register(@Body() createUserDto: CreateUserDto) {
+    async register(@Req() request, @Body() createUserDto: CreateUserDto) {
         try {
+            const loginUser = request.user.sub;
+            const checkRole = await this.userService.findById(loginUser);
+            const userRole = checkRole.role;
             const { firstName, lastName, email, password, dob, gender, address, phoneNumber, role } = await registerSchema.validate(createUserDto);
-            return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber, role);
+            return await this.userService.register(firstName, lastName, email, password, dob, gender, address, phoneNumber, role, userRole, loginUser);
         } catch (error) {
             return {
                 statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
@@ -111,9 +116,9 @@ export class UsersController {
     // logout
     @UseGuards(AuthGuard)
     @Post('logout')
-    async logout(@Body() req: any) {
+    async logout(@Req() request) {
         try {
-            await this.userService.logout(req.user['sub']);
+            await this.userService.logout(request.user['sub']);
         } catch (error) {
             return {
                 statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
@@ -124,10 +129,10 @@ export class UsersController {
     // refresh token
     @UseGuards(RefreshTokenGuard)
     @Get('refresh')
-    refreshTokens(@Body() req: any) {
+    refreshTokens(@Req() request) {
         try {
-            const userId = req.user['sub'];
-            const refreshToken = req.user['refreshToken'];
+            const userId = request.user['sub'];
+            const refreshToken = request.user['refreshToken'];
             return this.userService.refreshTokens(userId, refreshToken);
         } catch (error) {
             return {
@@ -152,12 +157,27 @@ export class UsersController {
 
     // update user profile
     @UseGuards(AuthGuard, RolesGuard)
-    @HasRole(Role.USER, Role.ADMIN, Role.SUPERADMIN)
+    @HasRole(Role.USER, Role.ADMIN, Role.USER)
     @Put('/update-user/:id')
-    async updateUser(@Param('id') id: string, @Body() updateUserProfile: UpdateUserProfiledDto) {
+    async updateUser(@Param('id') id: string,@Req() request, @Body() updateUserProfile: UpdateUserProfiledDto) {
         try {
+            const loginUser = request.user.sub;
+            const checkRole = await this.userService.findById(loginUser);
+            const userRole = checkRole.role;
             const { firstName, lastName, dob, address } = updateUserProfile;
-            return await this.userService.updateUser(id, firstName, lastName, dob, address)
+            return await this.userService.updateUser(id, firstName, lastName, dob, address,userRole, loginUser)
+        } catch (error) {
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
+        }
+    }
+
+    @UseGuards(AuthGuard)
+    @Get('/users')
+    async getUsers(){
+        try {
+            return await this.userService.getUsers();
         } catch (error) {
             return {
                 statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST

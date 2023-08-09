@@ -10,6 +10,7 @@ import { Twilio } from 'twilio';
 import { EmailService } from 'src/email/email.service';
 import { compare } from 'bcryptjs';
 import { message, otp, otpExpiration, time } from 'src/utils/constant/constant';
+import { Role } from 'src/utils/enum/role.enum';
 
 @Injectable()
 export class UsersService {
@@ -26,7 +27,7 @@ export class UsersService {
         this.twilioClient = new Twilio(twilioAccountSid, twilioAuthToken);
     }
     //  signup user
-    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string, role:string) {
+    async register(firstName: string, lastName: string, email: string, password: string, dob: string, gender: string, address: string, phoneNumber: string, role: string, userRole: string, createdBy: string) {
         const hashedPassword = await hashPassword(password);
         let user;
         try {
@@ -38,7 +39,11 @@ export class UsersService {
             if (userPhoneExists) {
                 return { statusCode: STATUS_CODE.FORBIDDEN, message: RESPONSE_MESSAGES.MESSAGE.PHONE_NUMBER_ALREADY_EXISTS };
             }
-            user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword, passwordUpdateAt: new Date(), role });
+            const hasAccess = await this.hasCreateUserAccess(role, userRole)
+            if(!hasAccess){
+                return { statusCode: STATUS_CODE.BAD_REQUEST, message:RESPONSE_MESSAGES.MESSAGE.DONT_HAVE_PERMISSION}
+            }
+            user = await this.userModel.create({ firstName, lastName, email, dob, gender, address, phoneNumber, password: hashedPassword, passwordUpdateAt: new Date(), role, createdBy });
             await this.sendOtpToPhone(user);
             await this.sendOtpToEmail(user);
             return { statusCode: STATUS_CODE.CREATED, data: user, message: RESPONSE_MESSAGES.MESSAGE.USER_REGISTERED_SUCCESSFULLY };
@@ -182,7 +187,7 @@ export class UsersService {
             if (!user) {
                 return { statusCode: STATUS_CODE.UNAUTHORIZED, message: RESPONSE_MESSAGES.MESSAGE.INVALID_CREDENTIALS };
             }
-            if(user.isVerified){
+            if (user.isVerified) {
                 if (phoneNumber) {
                     verifiedUser = await this.sendOtpToPhone(user);
                 }
@@ -199,7 +204,7 @@ export class UsersService {
                 }
                 return { statusCode: STATUS_CODE.UNAUTHORIZED, message: RESPONSE_MESSAGES.MESSAGE.VERIFY_ACCOUNT }
             }
-            
+
 
         } catch (error) {
             return { statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST }
@@ -400,17 +405,57 @@ export class UsersService {
 
     }
 
-    async updateUser(id:string,firstName:string,lastName:string,dob:string,address:string){
+    async hasAccess(user, userRole, loginUser){
+        if (userRole == Role.ADMIN && user.role == Role.ADMIN && user.id != loginUser) {
+            return false
+        } else if (userRole == Role.USER && user.id != loginUser) {
+            return false
+        } else if (userRole == Role.ADMIN && user.createdBy != loginUser) {
+            return false
+        } else if (userRole == Role.ADMIN && user.role == Role.SUPERADMIN) {
+            return false
+        }
+        return true;
+    }
+
+    async hasCreateUserAccess(role, userRole){
+        if (userRole == Role.ADMIN && role == Role.SUPERADMIN) {
+            return false
+        }
+        if (userRole == Role.SUPERADMIN && role == Role.SUPERADMIN) {
+            return false
+        }
+        if (userRole == Role.ADMIN && role == Role.ADMIN) {
+            return false
+        }
+        return true
+    }
+
+    async updateUser(id: string, firstName: string, lastName: string, dob: string, address: string, userRole: string, loginUser: string) {
         try {
             const user = await this.findById(id)
             if (!user) {
                 return { statusCode: STATUS_CODE.NOT_FOUND, message: RESPONSE_MESSAGES.MESSAGE.USER_NOT_FOUND };
             }
+            const hasAccess = await this.hasAccess(user, userRole, loginUser)
+            if(!hasAccess){
+                return { statusCode: STATUS_CODE.BAD_REQUEST, message:RESPONSE_MESSAGES.MESSAGE.DONT_HAVE_PERMISSION}
+            }
             await this.userModel.update(
-                { firstName: firstName, lastName:lastName,dob:dob,address:address },
+                { firstName: firstName, lastName: lastName, dob: dob, address: address },
                 { where: { id: id } },
             );
             return { statusCode: STATUS_CODE.OK, message: RESPONSE_MESSAGES.MESSAGE.USER_PROFILE_UPDATED }
+        } catch (error) {
+            return {
+                statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST
+            }
+        }
+    }
+    async getUsers(){
+        try {
+            const users = await this.userModel.findAll();
+            return {statusCode: STATUS_CODE.OK, data:users, message:RESPONSE_MESSAGES.MESSAGE.LIST_USERS}
         } catch (error) {
             return {
                 statusCode: STATUS_CODE.BAD_REQUEST, data: error, message: RESPONSE_MESSAGES.MESSAGE.BAD_REQUEST

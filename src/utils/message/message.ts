@@ -26,6 +26,15 @@ export const RESPONSE_MESSAGES = {
         INVALID_OTP:"Invalid Otp",
         PASSWORD_CHANGE_SUCCESSFULLY:"Your password has been change successfully",
         VERIFY_ACCOUNT: "Your account is not verified.Please verify your account. OTP sent.",
-        USER_PROFILE_UPDATED: "Your profile has been updated"
+        USER_PROFILE_UPDATED: "Your profile has been updated",
+        ADMIN_NOT_CREATED_SUPERADMIN: "Admin can't create super admin",
+        ADMIN_NOT_CREATED_ADMIN: "Admin can't create admin",
+        SUPER_ADMIN_NOT_CREATED_SUPER_ADMIN: "Super Admin can't create another super admin",
+        ADMIN_NOT_UPDATED_OTHER_ADMIN: "Admin can't update other admin profile",
+        USER_NOT_UPDATED_OTHER_USER:"User can't update other admin profile",
+        ADMIN_NOT_UPDATE_SUPERADMIN: "Admin can't update superadmin profile",
+        ADMIN_NOT_UPDATE_OTHER_ADMIN_USERS: "Admin can't update another admin's users",
+        DONT_HAVE_PERMISSION: "You don't have permission",
+        LIST_USERS: "List of users"
     }
 }

@@ -14,5 +14,6 @@ export interface IUSER {
     otp?: string;
     otpExpiration?: Date;
     role?: string;
+    createdBy?:string;
 }
 

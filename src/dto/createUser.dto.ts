@@ -31,11 +31,14 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     @IsNumber()
-    password: number;
+    password: string;
 
     @IsNotEmpty()
     @IsString()
     role : string;
     
+    @IsNotEmpty()
+    @IsString()
+    createdBy : string;
 
 }

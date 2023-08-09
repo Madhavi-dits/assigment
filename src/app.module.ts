@@ -27,7 +27,7 @@ import { EmailModule } from './email/email.module';
       models: [__dirname + '/**/*.model.ts'],
       autoLoadModels: true,
       synchronize: true,
-      logging: false
+      logging: false,
     }),
     ScheduleModule.forRoot(),
     CronjobsModule,
