@@ -57,7 +57,7 @@ $ npm install
 
 ## Run Migration
 ```bash
-$ npx sequelize-cli db:seed:all --migration-path src/database/migrations
+$ npx sequelize-cli db:migrate --migrations-path src/database/migrations
 ```
 
 ## Run Seeder
