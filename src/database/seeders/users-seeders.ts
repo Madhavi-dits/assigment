@@ -1,11 +1,9 @@
-import { QueryInterface, Sequelize } from 'sequelize';
-import { Role } from 'src/utils/enum/role.enum';
-import { hashPassword } from 'src/utils/password';
+const bcrypt = require("bcrypt");
 
+const password = bcrypt.hashSync('12345678', bcrypt.genSaltSync(8));
 
-const hashedPassword =  hashPassword('12345678');
 module.exports = {
-  up: async (queryInterface: QueryInterface, Sequelize: Sequelize) => {
+  up: async (queryInterface) => {
     await queryInterface.bulkInsert('Users', [
       {
         firstName: 'Madhavi',
@@ -16,14 +14,17 @@ module.exports = {
         address:'chandigarh',
         createdAt: new Date(),
         updatedAt: new Date(),
-        role:Role.SUPERADMIN,
+        role:'superadmin',
         phoneNumber: '9691629030',
-        password: hashedPassword
+        password: password,
+        passwordUpdateAt: new Date(),
+        isVerified: 1
       },
     ], {});
   },
 
-  down: async (queryInterface: QueryInterface, Sequelize: Sequelize) => {
+  down: async (queryInterface) => {
     await queryInterface.bulkDelete('Users', null, {});
   }
 };
+

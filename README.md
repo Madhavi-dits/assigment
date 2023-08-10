@@ -28,6 +28,8 @@
 Node version 20.5.0
 Nest version 10.1.0
 Database mysql with squelizer
+Run migration:- npx sequelize-cli db:seed:all --migration-path src/database/migrations
+Run seeder:- npx sequelize-cli db:seed:all --seeders-path src/database/seeders
 Send OTP to phone :-  use twilio
 Send emails : - use nodemailer
 
@@ -42,13 +44,25 @@ Signup
 Login,
 Reset Password,
 Forget Password,
-Change Password
+Change Password,
+
+In this project role based authentication based.
 
 
 ## Installation
 
 ```bash
 $ npm install
+```
+
+## Run Migration
+```bash
+$ npx sequelize-cli db:seed:all --migration-path src/database/migrations
+```
+
+## Run Seeder
+```bash
+$  npx sequelize-cli db:seed:all --seeders-path src/database/seeders
 ```
 
 ## Running the app

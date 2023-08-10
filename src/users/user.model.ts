@@ -1,6 +1,4 @@
-import { allow } from 'joi';
-import { IntegerDataType } from 'sequelize';
-import { Column, DataType, Table, Model, Default, AllowNull } from 'sequelize-typescript';
+import { Column, DataType, Table, Model, Default } from 'sequelize-typescript';
 
 @Table
 export class User extends Model<User> {

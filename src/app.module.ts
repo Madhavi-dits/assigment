@@ -23,7 +23,7 @@ import { EmailModule } from './email/email.module';
       // port: 3306,
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
-      database: process.env.DB_NAME_DEVELOPMENT,
+      database: process.env.DB_DATABASE,
       models: [__dirname + '/**/*.model.ts'],
       autoLoadModels: true,
       synchronize: true,
