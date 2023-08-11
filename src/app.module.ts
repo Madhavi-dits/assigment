@@ -11,6 +11,10 @@ import { EmailService } from './email/email.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronjobsModule } from './cronjobs/cronjobs.module';
 import { EmailModule } from './email/email.module';
+import { ExcelReaderService } from './files/file-reader.service';
+import { FileUploadService } from './files/file-upload.service';
+import { FileUploadController } from './files/file-upload.controller';
+import { FileUploadModule } from './files/file-upload.module';
 
 @Module({
   imports: [
@@ -33,8 +37,9 @@ import { EmailModule } from './email/email.module';
     CronjobsModule,
     UsersModule,
     EmailModule,
+    FileUploadModule
   ],
-  controllers: [AppController, UsersController],
-  providers: [AppService, UsersService, JwtService, EmailService,]
+  controllers: [AppController, UsersController, FileUploadController],
+  providers: [AppService, UsersService, JwtService, EmailService, ExcelReaderService, FileUploadService]
 })
 export class AppModule { }

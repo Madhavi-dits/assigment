@@ -35,6 +35,9 @@ export const RESPONSE_MESSAGES = {
         ADMIN_NOT_UPDATE_SUPERADMIN: "Admin can't update superadmin profile",
         ADMIN_NOT_UPDATE_OTHER_ADMIN_USERS: "Admin can't update another admin's users",
         DONT_HAVE_PERMISSION: "You don't have permission",
-        LIST_USERS: "List of users"
+        LIST_USERS: "List of users",
+        EXCEL_STORE: "Excel data store successfully",
+        EXCEL_IMPORTED:"Excel already import to db",
+        EXPORTED_DATA_TO_EXCEL:"Exported data to Excel"
     }
 }

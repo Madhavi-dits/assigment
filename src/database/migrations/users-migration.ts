@@ -1,4 +1,3 @@
-
 const  QueryInterface  = require('sequelize');
 const DataTypes = require('sequelize').DataTypes;
 
